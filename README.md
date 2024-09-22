@@ -1,4 +1,4 @@
-# telecomadmin_for_HG5143F-ONU_v4
+# telecomadmin_for_HG5143F-ONU
 用于 搭载电信官方V4固件的 型号为HG5143F(ONU)的天翼光猫 的 超级密码获取工具
 
 > 如果本项目帮到了你 那么请点亮右上角免费的Star吧 plz~
@@ -10,7 +10,9 @@
     > 本项目在软件版本`V4.10.M5001`的光猫上测试通过.
 
 2. 准备一个 安装了 版本低于3.13的Python 的 Win10(或更高) 操作系统
-
+   
+    > 也可以下载Release中的打包好的单文件版本 跳过2/3步
+    
 3. 通过pip安装Python第三方库`requests`:`pip install requests`
 
 4. 下载并运行仓库内文件`main.py` 输入对应参数 获取超密
