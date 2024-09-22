@@ -10,8 +10,6 @@
     > 本项目在软件版本`V4.10.M5001`的光猫上测试通过.
 
 2. 准备一个 安装了 版本低于3.13的Python 的 Win10(或更高) 操作系统
-   
-    > 也可以下载Release中的打包好的单文件版本 跳过2/3步
     
 3. 通过pip安装Python第三方库`requests`:`pip install requests`
 
