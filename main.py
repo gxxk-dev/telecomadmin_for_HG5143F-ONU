@@ -30,14 +30,12 @@ print(60*"H"+'\n')
 
 
 # 设置命令执行延迟
-tnCmdDelay = "0.05" if (value := input(
-    "Telnet命令执行延迟(单位秒)(0.05s):")) == "" else value  # 命令执行延迟
+tnCmdDelay = "0.09" if (value := input(
+    "Telnet命令执行延迟(单位秒)(0.1s):")) == "" else value  # 命令执行延迟
 try:
     tnCmdDelay = float(tnCmdDelay)
-    if tnCmdDelay<=0.03:
-        print("WARNING: 一般的家庭网络下,小于等于0.03s的命令执行延迟大概率会因网络延迟而操作失败.")
-        print("HINT: 此时读取时的延迟将会比正常的命令执行多延0.006s以增大成功获取的几率")
-    
+    if tnCmdDelay<=0.08:
+        print("WARNING: 一般的家庭网络下,过低的命令执行延迟大概率会增大网络延迟使操作失败的可能性.")
 except ValueError:
     raise ValueError("请输入一个正确的值")
 
@@ -79,7 +77,7 @@ with telnetlib.Telnet(ip, port=23) as tn:
 
     tn.write(b"load_cli factory\nshow admin_pwd\n")
     print("尝试获取超密...")
-    time.sleep(tnCmdDelay+0.006 if tnCmdDelay<=0.03 else 0)
+    time.sleep(tnCmdDelay)
     
     tnContent = tn.read_very_eager().decode('ascii')
 
