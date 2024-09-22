@@ -91,3 +91,5 @@ with telnetlib.Telnet(ip, port=23) as tn:
             pyperclip.copy(output.group())
     else:
         print("未能获取超密,请检查 版本/型号 或增大命令执行延迟后再试一次.或许可以跟着教程手动走一遍？\n教程：https://blog.csdn.net/weixin_45736958/article/details/135500085")
+
+input('回车键以退出...')
