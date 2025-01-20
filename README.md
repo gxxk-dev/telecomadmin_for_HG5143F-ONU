@@ -9,7 +9,7 @@
 
     > 本项目在软件版本`V4.10.M5001`的光猫上测试通过.
 
-2. 准备一个 安装了 版本低于3.13的Python 的 Win10(或更高) 操作系统
+2. 准备一个 已安装Python 的 Win10(或更高) 操作系统
     
 3. 通过pip安装Python第三方库`requests`:`pip install requests`
 
