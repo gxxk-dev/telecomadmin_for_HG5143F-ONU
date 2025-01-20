@@ -11,7 +11,7 @@ try:
     import subprocess
     import re
     import requests
-    import telnetlib
+    import socket
     import time
 except ModuleNotFoundError:
     raise ModuleNotFoundError("请安装requests库并确保Python版本低于Py3.12!")
@@ -29,27 +29,18 @@ print("AGPLv3+ License. By Gxxk.")
 print(60*"H"+'\n')
 
 
-# 设置命令执行延迟
-tnCmdDelay = "0.09" if (value := input(
-    "Telnet命令执行延迟(单位秒)(0.1s):")) == "" else value  # 命令执行延迟
-try:
-    tnCmdDelay = float(tnCmdDelay)
-    if tnCmdDelay<=0.08:
-        print("WARNING: 一般的家庭网络下,过低的命令执行延迟大概率会增大网络延迟使操作失败的可能性.")
-except ValueError:
-    raise ValueError("请输入一个正确的值")
-
-
 # 网关信息获取
-ip = "192.168.1.1" if (ip := input("网关IP(192.168.1.1):")) == "" else ip # 网关IP
+ip = "192.168.1.1" if (temp := input("网关IP(192.168.1.1):")) == "" else temp # 网关IP
+assert re.match(r"\b(?:\d{1,3}\.){3}\d{1,3}\b",ip),Exception("不符规范的IP地址")
+
 mac = subprocess.check_output(
     f"arp -a {ip}", shell=True).decode('utf-8', errors='ignore').upper() # 网关MAC码获取
 try:
     mac = re.search("[A-F0-9]{2}(-[A-F0-9]{2}){5}",
                     mac).group().split("-")  # 从命令输出中提取网关MAC码
-except:
-    raise Exception("MAC信息获取失败！")
-print(f"网关MAC: {":".join(mac)}.")
+except:pass
+mac = "".join(mac) if (temp := input(f"网关IP({'-'.join(mac)}):")) == "" else temp # 网关IP
+assert re.match("^[A-F0-9]+$",mac),Exception("不符规范的MAC地址(不应存在特殊字符)")
 
 
 # 开启网关Telnet
@@ -58,28 +49,44 @@ requestStat = requests.get(
 if requestStat.status_code != 200:
     raise Exception("无法开启Telnet! 请检查型号/版本或网关可用性")
 
+def receive_until(sock, prompt, tmo=5,bufferNum=256):
+    startTime=time.time()
+    data = b""
+    while True:
+        chunk = sock.recv(bufferNum)
+        if not chunk:
+            raise Exception("连接已关闭")
+        data += chunk
+        if prompt in data:
+            break
+        if (time.time() - startTime) >= tmo:
+            raise Exception("超时!")
+    return data
 
 tnUsername = "telnetadmin"  # Telnet用户名
 tnPwd = f"FH-nE7jA%5m{mac[-6:]}"  # Telnet密码
 
-with telnetlib.Telnet(ip, port=23) as tn:
-    tnUsername = "telnetadmin"  # Telnet用户名
-    tnPwd = f"FH-nE7jA%5m{''.join(mac[-3:])}"  # Telnet密码
-    time.sleep(tnCmdDelay)
-
-    tn.write(f"{tnUsername}\n".encode())
-    print(f"输入用户名：{tnUsername}")
-    time.sleep(tnCmdDelay)
-
-    tn.write(f"{tnPwd}\n".encode())
-    print(f"输入密码：{tnPwd}")
-    time.sleep(tnCmdDelay)
-
-    tn.write(b"load_cli factory\nshow admin_pwd\n")
-    print("尝试获取超密...")
-    time.sleep(tnCmdDelay)
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as tn:
+    tn.connect((ip, 23)) # 连接Telnet
+    print(f"从端口23连接到{ip}")
+    print("等待回复...",end="\r")
+    receive_until(tn,b"Login:")
     
-    tnContent = tn.read_very_eager().decode('ascii')
+    print(f"输入用户名：{tnUsername}")
+    tn.sendall(f"{tnUsername}\n".encode())
+    print("等待回复...",end="\r")
+    receive_until(tn,b"Password:")
+
+    print(f"输入密码：{tnPwd}")
+    tn.sendall(f"{tnPwd}\n".encode())
+    print("等待回复...",end="\r")
+    receive_until(tn,b"$")
+
+    print("尝试获取超密...")
+    tn.sendall(b"load_cli factory\nshow admin_pwd\n")
+    print("等待回复...",end="\r")
+    tnContent = receive_until(tn,b"telecomadmin").decode() # 利用缓冲区读取的特性获取全部内容
+    # 为了保留日志而有意为之
 
     output = re.search(r"telecomadmin\d{8}", tnContent)
     print(f"TelnetLog:\n{tnContent}\n")
@@ -90,6 +97,6 @@ with telnetlib.Telnet(ip, port=23) as tn:
         if clipboardStat:
             pyperclip.copy(output.group())
     else:
-        print("未能获取超密,请检查 版本/型号 或增大命令执行延迟后再试一次.或许可以跟着教程手动走一遍？\n教程：https://blog.csdn.net/weixin_45736958/article/details/135500085")
+        print("未能获取超密,请检查 版本/型号 后再试一次.或许可以跟着教程手动走一遍？\n教程：https://blog.csdn.net/weixin_45736958/article/details/135500085")
 
 input('回车键以退出...')
