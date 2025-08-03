@@ -9,15 +9,17 @@
 
     > 本项目在软件版本`V4.10.M5001`的光猫上测试通过.
 
-2. 准备一个 已安装Python 的 Win10(或更高) 操作系统
+2. 准备一个 已安装 uv 的 Win10(或更高) 操作系统
     
-3. 通过pip安装Python第三方库`requests`:`pip install requests`
+3. 克隆仓库：`git clone https://github.com/gxxk-dev/telecomadmin_for_HG5143F-ONU.git`
 
-4. 下载并运行仓库内文件`main.py`（<kbd>-OO</kbd>参数可使程序运行加快哦） 输入对应参数 获取超密
+4. 进入仓库目录并运行：`uv sync`
 
-    > 最后一个括号内的内容为该项的缺省值，若不输入任何内容将会使用该值.
+5. 运行代码：`uv run main.py`
 
-5. 进入光猫地址并输入此密码即可
+6. 根据提示信息输入内容并确认以获取密码
+
+7. Done!
 
 # License
 
