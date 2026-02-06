@@ -2,7 +2,7 @@
 
 # AGPLv3+ License. By Gxxk(Frez79).
 # 全自动获取 电信网关HG5143F(ONU) 的超管密码.
-# 仅在Win10LTSC2021/Py3.12.6上测试通过.
+# 在Win10LTSC2021/ArchLinux-Py3.13.6上测试通过.
 # 基于此教程编写：https://blog.csdn.net/weixin_45736958/article/details/135500085
 
 
@@ -13,8 +13,11 @@ try:
     import requests
     import socket
     import time
+    import platform
 except ModuleNotFoundError:
-    raise ModuleNotFoundError("请安装requests库并确保Python版本低于Py3.12!")
+    raise ModuleNotFoundError("请执行 uv sync !")
+
+# 剪贴板可用性检测
 try:
     import pyperclip
     clipboardStat = True
@@ -33,20 +36,48 @@ print(60*"H"+'\n')
 ip = "192.168.1.1" if (temp := input("网关IP(192.168.1.1):")) == "" else temp # 网关IP
 assert re.match(r"\b(?:\d{1,3}\.){3}\d{1,3}\b",ip),Exception("不符规范的IP地址")
 
-mac = subprocess.check_output(
-    f"arp -a {ip}", shell=True).decode('utf-8', errors='ignore').upper() # 网关MAC码获取
-try:
-    mac = re.search("[A-F0-9]{2}(-[A-F0-9]{2}){5}",
-                    mac).group().split("-")  # 从命令输出中提取网关MAC码
-except:pass
-mac = "".join(mac) if (temp := input(f"网关IP({'-'.join(mac)}):")) == "" else temp # 网关IP
-assert re.match("^[A-F0-9]+$",mac),Exception("不符规范的MAC地址(不应存在特殊字符)")
+def get_mac_address(ip: str) -> list[str] | None:
+    """获取指定IP的MAC地址，返回6个十六进制字节的列表"""
+    try:
+        if platform.system() == "Windows":
+            output = subprocess.check_output(
+                f"arp -a {ip}", shell=True).decode('utf-8', errors='ignore').upper()
+            match = re.search(r"([A-F0-9]{2}(-[A-F0-9]{2}){5})", output)
+            if match:
+                return match.group(1).split("-")
+        else:  # Linux / macOS
+            output = subprocess.check_output(
+                ["arp", "-n", ip], stderr=subprocess.DEVNULL).decode('utf-8', errors='ignore').upper()
+            match = re.search(r"([A-F0-9]{2}(:[A-F0-9]{2}){5})", output)
+            if match:
+                return match.group(1).split(":")
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        pass
+    return None
+
+mac = get_mac_address(ip)
+if mac is None:
+    print("无法自动获取网关MAC地址")
+    manual_mac = input("请手动输入网关MAC(格式AABBCCDDEEFF): ").strip().upper()
+    if re.match(r"^[A-F0-9]{12}$", manual_mac):
+        mac = [manual_mac[i:i+2] for i in range(0, 12, 2)]
+    else:
+        raise Exception("不符规范的MAC地址")
+else:
+    temp = input(f"网关MAC({'-'.join(mac)}): ")
+    if temp:
+        temp = temp.upper().replace("-", "").replace(":", "")
+        mac = [temp[i:i+2] for i in range(0, 12, 2)]
+assert re.match("^[A-F0-9]+$","".join(mac)),Exception("不符规范的MAC地址(不应存在特殊字符)")
 
 
 # 开启网关Telnet
 requestStat = requests.get(
-    f"http://{ip}:8080/cgi-bin/telnetenable.cgi?key={''.join(mac)}&telnetenable=1")
-if requestStat.status_code != 200:
+    f"http://{ip}:8080/cgi-bin/telnetenable.cgi?key={''.join(mac)}&telnetenable=1"
+)
+if requestStat.status_code == 200:
+    print("开启Telnet成功! ")
+else:
     raise Exception("无法开启Telnet! 请检查型号/版本或网关可用性")
 
 def receive_until(sock, prompt, tmo=5,bufferNum=256):
@@ -64,7 +95,7 @@ def receive_until(sock, prompt, tmo=5,bufferNum=256):
     return data
 
 tnUsername = "telnetadmin"  # Telnet用户名
-tnPwd = f"FH-nE7jA%5m{mac[-6:]}"  # Telnet密码
+tnPwd = f"FH-nE7jA%5m{''.join(mac[-3:])}"  # Telnet密码
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as tn:
     tn.connect((ip, 23)) # 连接Telnet
