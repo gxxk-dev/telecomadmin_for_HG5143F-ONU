@@ -1,9 +1,35 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "telecomadmin-for-hg5143f-onu"
 version = "0.1.0"
-description = "Add your description here"
+description = "获取 HG5143F-ONU telecomadmin password 的本地小工具"
 readme = "README.md"
 requires-python = ">=3.13"
+license = "AGPL-3.0-or-later"
+authors = [
+    { name = "Gxxk" },
+]
+keywords = ["HG5143F", "ONU", "telecomadmin", "FiberHome"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: System :: Networking",
+]
 dependencies = [
+    "cryptography>=49.0.0",
     "requests>=2.32.4",
 ]
+
+[project.urls]
+Homepage = "https://github.com/gxxk-dev/telecomadmin_for_HG5143F-ONU"
+Repository = "https://github.com/gxxk-dev/telecomadmin_for_HG5143F-ONU"
+
+[project.scripts]
+telecomadmin-for-hg5143f-onu = "main:main"
+hg5143f-admin = "main:main"
+
+[tool.setuptools]
+py-modules = ["main"]
